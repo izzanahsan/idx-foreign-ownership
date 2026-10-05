@@ -12,6 +12,8 @@ PY=.venv/bin/python
 
 gh auth status >/dev/null 2>&1 || { echo "Run 'gh auth login' first."; exit 1; }
 OWNER=$(gh api user --jq .login)
+gh auth setup-git >/dev/null            # let git push with the gh login
+git config --global http.postBuffer >/dev/null || git config --global http.postBuffer 157286400  # avoid HTTP 400 on larger pushes
 OWNER_ID=$(gh api user --jq .id)
 OWNER_NAME=$(gh api user --jq '.name // .login')
 

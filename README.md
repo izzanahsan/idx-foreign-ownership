@@ -2,9 +2,9 @@
 
 Tracks how much Indonesian (IDX) stock the world's largest asset managers hold, every quarter since 2020, from public filings, and tests whether their buying and selling predicts the market (IHSG).
 
-![tests](https://github.com/OWNER/idx-foreign-ownership/actions/workflows/tests.yml/badge.svg)
+![tests](https://github.com/izzanahsan/idx-foreign-ownership/actions/workflows/tests.yml/badge.svg)
 
-**Live dashboard:** https://OWNER.github.io/idx-foreign-ownership/
+**Live dashboard:** https://izzanahsan.github.io/idx-foreign-ownership/
 
 ![Dashboard overview](assets/screenshots/overview.png)
 
@@ -53,7 +53,7 @@ Out-of-sample directional accuracy was 47%, which is indistinguishable from a co
 ## Run it yourself
 
 ```bash
-git clone https://github.com/OWNER/idx-foreign-ownership.git && cd idx-foreign-ownership
+git clone https://github.com/izzanahsan/idx-foreign-ownership.git && cd idx-foreign-ownership
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 echo 'SEC_USER_AGENT="Your Name you@example.com"' > .env.local
