@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IDX Foreign Ownership</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f4f3ef; --surface: #ffffff; --surface-2: #f8f7f4; --chip: #efeee9;
+  --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e9e8e2; --axis: #c3c2b7; --border: rgba(11,11,11,0.08); --shadow: 0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.05);
+  --hero-1: #0B2545; --hero-2: #13315C; --hero-ink: #ffffff; --hero-ink2: rgba(255,255,255,.72);
+  --accent: #2a78d6; --accent-soft: #cde2fb; --accent-ink: #1c5cab;
+  --bar: #2a78d6; --bar-soft: #b7d3f6; --track: #f0efec;
+  --pos: #2a78d6; --neg: #e34948; --up: #006300; --down: #c62828;
+  --up-bg: rgba(12,163,12,.12); --down-bg: rgba(208,59,59,.12);
+  --warn-bg: #fff4d6; --warn-ink: #6b4a00; --warn-border: #fab219;
+  --other: #b4b2a9;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #202020; --chip: #2a2a28;
+  --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.08); --shadow: 0 1px 2px rgba(0,0,0,.4);
+  --hero-1: #0f1f38; --hero-2: #13315C;
+  --accent: #3987e5; --accent-soft: #184f95; --accent-ink: #9ec5f4;
+  --bar: #3987e5; --bar-soft: #1c5cab; --track: #262625;
+  --pos: #3987e5; --neg: #e66767; --up: #0ca30c; --down: #e66767;
+  --up-bg: rgba(12,163,12,.18); --down-bg: rgba(230,103,103,.18);
+  --warn-bg: #3a2e10; --warn-ink: #fad27a; --warn-border: #c98500;
+  --other: #5f5e5a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #202020; --chip: #2a2a28;
+    --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.08); --shadow: 0 1px 2px rgba(0,0,0,.4);
+    --hero-1: #0f1f38; --hero-2: #13315C;
+    --accent: #3987e5; --accent-soft: #184f95; --accent-ink: #9ec5f4;
+    --bar: #3987e5; --bar-soft: #1c5cab; --track: #262625;
+    --pos: #3987e5; --neg: #e66767; --up: #0ca30c; --down: #e66767;
+    --up-bg: rgba(12,163,12,.18); --down-bg: rgba(230,103,103,.18);
+    --warn-bg: #3a2e10; --warn-ink: #fad27a; --warn-border: #c98500;
+    --other: #5f5e5a;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; font-feature-settings: "cv11", "ss01"; }
+button, input, select { font: inherit; color: inherit; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px 48px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- top bar ---------- */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; backdrop-filter: saturate(1.4) blur(10px);
+  background: color-mix(in srgb, var(--page) 82%, transparent); border-bottom: 1px solid var(--border); }
+.topbar .inner { max-width: 1320px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.01em; min-width: 0; }
+.logo { width: 30px; height: 30px; border-radius: 8px; flex: none; display: grid; place-items: center; color: #fff; font-size: 12px;
+  font-weight: 800; background: linear-gradient(135deg, #0B2545 0%, #2a78d6 100%); }
+.brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spacer { flex: 1; }
+.updated { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 9px; padding: 7px 12px; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: var(--shadow);
+  text-decoration: none; color: var(--ink); white-space: nowrap; justify-content: center; }
+.btn:hover { border-color: var(--axis); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn[disabled] { opacity: .55; cursor: progress; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { white-space: nowrap; border: 0; background: transparent; padding: 5px 10px; border-radius: 7px; font-size: 12.5px; cursor: pointer; color: var(--ink2); }
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); font-weight: 600; }
+.seg button[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* ---------- hero ---------- */
+.hero { margin-top: 18px; border-radius: 20px; color: var(--hero-ink); padding: 26px 28px; position: relative; overflow: hidden;
+  background: radial-gradient(1200px 400px at 85% -20%, rgba(57,135,229,.45), transparent 60%),
+              linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 100%);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: center; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--hero-ink2); }
+.hero h1 { margin: 6px 0 2px; font-size: 15px; font-weight: 500; color: var(--hero-ink2); }
+.big { font-size: 56px; line-height: 1.05; font-weight: 800; letter-spacing: -.03em; }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 13px; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.pill.sm { font-size: 11.5px; padding: 2px 8px; }
+.pill.up { background: var(--up-bg); color: var(--up); } .pill.down { background: var(--down-bg); color: var(--down); }
+.pill.flat { background: var(--chip); color: var(--ink2); }
+.hero .pill.up { background: rgba(12,163,12,.22); color: #7ee07e; } .hero .pill.down { background: rgba(230,103,103,.22); color: #ffb3b3; }
+.hero .pill.flat { background: rgba(255,255,255,.12); color: var(--hero-ink2); }
+.hero-sub { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; color: var(--hero-ink2); font-size: 13px; }
+.spark { height: 150px; position: relative; }
+.spark-cap { display: flex; justify-content: space-between; color: var(--hero-ink2); font-size: 11.5px; margin-top: 4px; }
+
+.banner { margin-top: 14px; background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-border);
+  border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 500; }
+
+/* ---------- controls ---------- */
+.controls { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -.01em; }
+.card .hint { color: var(--muted); font-size: 12.5px; margin: 2px 0 12px; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.years { display: grid; gap: 6px; }
+.yrow { display: grid; grid-template-columns: 44px repeat(4, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.yrow .y { font-size: 12px; font-weight: 600; color: var(--muted); }
+.qchip { border: 1px solid transparent; background: var(--chip); border-radius: 8px; padding: 6px 0; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; color: var(--ink2); position: relative; text-align: center; }
+.qchip:hover:not([disabled]) { border-color: var(--axis); color: var(--ink); }
+.qchip.on { background: var(--accent); color: #fff; font-weight: 700; }
+.qchip[disabled] { opacity: .35; cursor: not-allowed; }
+.qchip.prov::after { content: ""; position: absolute; top: 4px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--warn-border); }
+.row-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 12.5px; }
+.row-tools input[type=date] { border: 1px solid var(--border); background: var(--surface-2); border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
+.mchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mchip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); background: var(--surface-2);
+  border-radius: 999px; padding: 6px 12px 6px 9px; font-size: 12.5px; cursor: pointer; color: var(--ink); transition: opacity .15s; }
+.mchip .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.mchip.off { opacity: .45; background: transparent; text-decoration: line-through; }
+.link { background: none; border: 0; color: var(--accent-ink); cursor: pointer; padding: 0; font-size: 12.5px; font-weight: 500; }
+
+/* ---------- KPIs ---------- */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.kpi .label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.kpi .value { font-size: 28px; font-weight: 750; letter-spacing: -.02em; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
+.kpi .sub { font-size: 12.5px; color: var(--ink2); margin-top: 2px; }
+
+/* ---------- layout ---------- */
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.full { margin-top: 16px; }
+
+/* ---------- ranked lists ---------- */
+.rank { display: grid; gap: 2px; }
+.ritem { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 7px 8px; border-radius: 10px; }
+.ritem.click { cursor: pointer; }
+.ritem.click:hover { background: var(--surface-2); }
+.ritem .n { color: var(--muted); font-size: 12px; text-align: right; }
+.ritem .name { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 500; }
+.ritem .name .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ritem .name .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.ritem .barline { grid-column: 2 / 4; height: 6px; background: var(--track); border-radius: 999px; overflow: hidden; }
+.ritem .barline > i { display: block; height: 100%; border-radius: 999px; background: var(--bar); }
+.ritem .barline > i.stale { background: repeating-linear-gradient(135deg, var(--bar-soft) 0 4px, var(--bar) 4px 6px); }
+.ritem .right { display: flex; align-items: center; gap: 8px; }
+.ritem .val { font-weight: 650; font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; }
+.tk { font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 2px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-ink); flex: none; }
+.tk.none { background: var(--chip); color: var(--muted); }
+.holders { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.sm { font-size: 12px; } .muted { color: var(--muted); }
+.up { color: var(--up); } .down { color: var(--down); }
+
+/* ---------- movers ---------- */
+.mv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 84px; gap: 10px; align-items: center; padding: 6px 4px; }
+.mv .name { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.mv .name .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mv .track { position: relative; height: 16px; }
+.mv .track::before { content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: var(--axis); }
+.mv .track i { position: absolute; top: 3px; height: 10px; border-radius: 4px; }
+.mv .v { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 13px; }
+.mv-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 84px; gap: 10px; color: var(--muted); font-size: 11.5px; padding: 0 4px 4px; }
+.mv-head span:nth-child(2) { display: flex; justify-content: space-between; }
+
+/* ---------- tables ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 11.5px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--grid); padding: 8px; position: sticky; top: 0; background: var(--surface); }
+td { padding: 8px; border-bottom: 1px solid var(--grid); }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+.tbl-wrap { overflow: auto; max-height: 520px; }
+.hidden { display: none !important; }
+.empty { color: var(--muted); text-align: center; padding: 40px 0; }
+
+/* ---------- misc ---------- */
+.cmp { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.cmp select { border: 1px solid var(--border); background: var(--surface-2); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+.exports { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.notes { color: var(--ink2); font-size: 12.5px; margin: 0; padding-left: 18px; }
+.notes li { margin: 4px 0; }
+.src { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 12.5px; margin-top: 8px; }
+.src .muted { text-align: right; white-space: nowrap; }
+.sdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+h3 { font-size: 13px; margin: 18px 0 6px; }
+
+/* ---------- drawer ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(640px, 100vw); background: var(--surface); z-index: 41;
+  box-shadow: -12px 0 40px rgba(0,0,0,.18); transform: translateX(100%); transition: transform .25s ease; display: flex; flex-direction: column; }
+.drawer.open { transform: none; }
+.drawer header { padding: 18px 20px; border-bottom: 1px solid var(--grid); display: flex; align-items: flex-start; gap: 10px; }
+.drawer header h2 { margin: 2px 0; font-size: 18px; }
+.drawer .body { padding: 8px 20px 20px; overflow: auto; }
+
+/* ---------- toast ---------- */
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--surface);
+  padding: 10px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,.25); display: flex; gap: 10px; align-items: center; max-width: calc(100vw - 32px); }
+.spin { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s 0.8s linear infinite; flex: none; }
+@keyframes s { to { transform: rotate(360deg); } }
+.busy { opacity: .6; transition: opacity .15s; }
+
+/* ---------- guide ---------- */
+.guide { margin-top: 16px; padding: 0; }
+.guide summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.guide summary::-webkit-details-marker { display: none; }
+.guide summary::after { content: "Show"; margin-left: auto; font-size: 12.5px; font-weight: 500; color: var(--accent-ink); }
+.guide[open] summary::after { content: "Hide"; }
+.guide summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 16px; }
+.guide .gsub { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+.guide ol { margin: 0; padding: 0 18px 16px 38px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 28px; }
+.guide li { color: var(--ink2); font-size: 13px; padding-left: 4px; }
+.guide li b { color: var(--ink); display: block; font-size: 13.5px; }
+@media (max-width: 1000px) { .guide ol { grid-template-columns: 1fr; } }
+
+/* ---------- flow study ---------- */
+.period-pick { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.period-pick select { border: 1px solid var(--border); background: var(--surface-2); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+.pstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.pstat { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.pstat .label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.pstat .value { font-size: 24px; font-weight: 750; letter-spacing: -.02em; margin-top: 2px; }
+.pstat .sub { font-size: 12.5px; color: var(--ink2); }
+.answer { border-left: 3px solid var(--accent); background: var(--surface-2); border-radius: 0 10px 10px 0; padding: 10px 14px; font-size: 13.5px; color: var(--ink2); margin-top: 12px; }
+.answer b { color: var(--ink); }
+@media (max-width: 700px) { .pstats { grid-template-columns: 1fr; } }
+.site-foot { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--grid); color: var(--muted); font-size: 12px;
+  display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; }
+.study { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; margin-top: 4px; }
+.verdict { display: flex; gap: 14px; align-items: flex-start; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; margin: 6px 0 14px; }
+.verdict .big2 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; }
+.verdict p { margin: 0; color: var(--ink2); font-size: 13.5px; }
+.mini-title { font-size: 12px; font-weight: 600; color: var(--muted); margin: 6px 0 2px; }
+.sig { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+.sig.no { background: var(--chip); color: var(--muted); } .sig.yes { background: var(--accent-soft); color: var(--accent-ink); }
+.static-only { display: none; } body.static .static-only { display: initial; } body.static .live-only { display: none !important; }
+body.static .mchip { cursor: default; }
+@media (max-width: 1000px) { .study { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) {
+  .hero { grid-template-columns: 1fr; } .controls, .grid2 { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .big { font-size: 40px; } .hero { padding: 20px; }
+  .kpis { grid-template-columns: 1fr; } .updated, .brand span { display: none; }
+  .mv, .mv-head { grid-template-columns: minmax(0, 1fr) 84px; } .mv .track, .mv-head span:nth-child(2) { display: none; }
+  .holders { display: none; }
+  .spark-cap span:nth-child(2) { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="inner">
+  <div class="brand"><div class="logo">ID</div><span>IDX Foreign Ownership Tracker</span></div>
+  <div class="spacer"></div>
+  <div class="updated" id="updated"></div>
+  <button class="btn live-only" id="refresh" title="Download any new SEC N-PORT and NBIM filings">↻ Refresh data</button>
+  <div class="seg" id="theme" role="group" aria-label="Theme">
+    <button data-t="light" title="Light">☀</button><button data-t="auto" title="Match system">Auto</button><button data-t="dark" title="Dark">☾</button>
+  </div>
+</div></div>
+
+<div class="wrap" id="app">
+  <section class="hero">
+    <div>
+      <div class="eyebrow" id="h-eyebrow">Tracked foreign institutional exposure</div>
+      <h1>Indonesian equities (IDX) held by the world's largest asset managers</h1>
+      <div class="big num" id="h-total">—</div>
+      <div class="hero-sub"><span class="pill flat" id="h-pill">—</span><span id="h-sub"></span></div>
+    </div>
+    <div>
+      <div class="spark"><canvas id="c-spark"></canvas></div>
+      <div class="spark-cap"><span id="sp-first"></span><span>Total tracked exposure · click a point to open that quarter</span><span id="sp-last"></span></div>
+    </div>
+  </section>
+  <div class="banner hidden" id="banner">⚠ <b>Provisional quarter.</b> It ended less than 75 days ago and some funds haven't filed yet, so totals and QoQ will change as filings arrive.</div>
+
+  <details class="card guide" id="guide">
+    <summary>New here? How to use this dashboard <span class="gsub">· 1 minute</span></summary>
+    <ol>
+      <li><b>Read the headline</b>The big number is the total value of Indonesian stocks held by the 10 tracked fund managers, with the change from the previous quarter.</li>
+      <li><b>Pick a quarter</b>Click any quarter in the Period grid, click a point on the hero chart, or use the ← → keys. Every number on the page updates.</li>
+      <li><b>Filter managers</b>Toggle managers on or off in the Managers panel. "US funds only" hides Norway's wealth fund.</li>
+      <li><b>Drill into a manager</b>Click a manager in "Exposure by manager" to see every Indonesian stock it holds and what changed since last quarter.</li>
+      <li><b>Check the money flow</b>"Net flow over a period" shows how much the funds actually bought or sold between two quarters, with price moves stripped out.</li>
+      <li><b>Read the evidence</b>"Do foreign fund flows predict the market?" tests whether this buying and selling has predicted IHSG. So far it hasn't. Use it as context, not a trading signal.</li>
+    </ol>
+  </details>
+
+  <section class="controls">
+    <div class="card">
+      <div class="card-head"><div><h2>Period</h2><p class="hint">Click any quarter to change every chart on the page (or use ← → keys)</p></div>
+        <div class="seg"><button id="prev" title="Previous quarter">‹ Prev</button><button id="next" title="Next quarter">Next ›</button></div></div>
+      <div class="years" id="years"></div>
+      <div class="row-tools">Or jump to a date <input type="date" id="date" aria-label="Jump to date"><span>· <span style="color:var(--warn-border)">●</span> = provisional</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><h2>Managers</h2><p class="hint">Toggle who's included. Totals, holdings, sectors and movers all update.</p></div>
+        <div class="sm" style="white-space:nowrap"><button class="link" id="m-all">All</button> · <button class="link" id="m-sec">US funds only</button></div></div>
+      <div class="mchips" id="mchips"></div>
+      <div class="row-tools" id="m-note"></div>
+    </div>
+  </section>
+
+  <section class="kpis">
+    <div class="card kpi"><div class="label">Managers reporting</div><div class="value num" id="k-mgr">—</div><div class="sub" id="k-mgr-s"></div></div>
+    <div class="card kpi"><div class="label">IDX securities held</div><div class="value num" id="k-sec">—</div><div class="sub">Distinct IDX names across selected managers</div></div>
+    <div class="card kpi"><div class="label">Top-10 concentration</div><div class="value num" id="k-conc">—</div><div class="sub">Share of exposure in the 10 largest names</div></div>
+    <div class="card kpi"><div class="label">Largest holding</div><div class="value" id="k-top">—</div><div class="sub" id="k-top-s"></div></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <div class="card-head"><div><h2>Exposure by manager</h2><p class="hint">Click a manager to see every position · striped = carried forward (†)</p></div>
+        <button class="btn" data-tbl="managers">Table</button></div>
+      <div id="managers-list" class="rank"></div><div id="managers-table" class="tbl-wrap hidden"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><h2>Top 15 IDX holdings</h2><p class="hint">Aggregate across selected managers · hover for sector &amp; ISIN</p></div>
+        <button class="btn" data-tbl="top">Table</button></div>
+      <div id="top-list" class="rank"></div><div id="top-table" class="tbl-wrap hidden"></div>
+    </div>
+  </section>
+
+  <section class="card full">
+    <div class="card-head"><div><h2>Exposure trend by manager</h2><p class="hint">Per calendar quarter, 2020 to present · hover for the breakdown · click to open a quarter</p></div>
+      <div class="seg" id="trend-mode"><button data-v="usd" class="on">USD</button><button data-v="pct">Share %</button></div></div>
+    <div style="height:380px; position:relative"><canvas id="c-trend"></canvas></div>
+  </section>
+
+  <section class="card full" id="study-card">
+    <div class="card-head"><div><h2>Do foreign fund flows predict the market?</h2>
+      <p class="hint">Net buying/selling by the tracked SEC funds (split-adjusted share changes, price moves stripped out) vs the IDX Composite in USD</p></div></div>
+    <div id="study-body"><div class="empty">Running the study…</div></div>
+  </section>
+
+  <section class="card full" id="period-card">
+    <div class="card-head"><div><h2>Net flow over a period</h2>
+      <p class="hint">Pick a stretch of quarters: how much did the tracked funds buy or sell, how unusual is that, and what did IHSG do afterwards in the past?</p></div>
+      <div class="period-pick"><select id="pf-a" aria-label="From quarter"></select><span class="muted">→</span><select id="pf-b" aria-label="To quarter"></select></div></div>
+    <div id="period-body"><div class="empty">Loading…</div></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Sector allocation</h2><p class="hint">Share of exposure by IDX-IC sector</p>
+      <div id="sectors-list" class="rank"></div>
+    </div>
+    <div class="card">
+      <h2>Biggest QoQ movers</h2><p class="hint">Change in USD value vs prior quarter (price + flows, same managers)</p>
+      <div id="movers-list"></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Compare two quarters</h2><p class="hint">Manager exposure between any two quarters</p>
+      <div class="cmp"><select id="cmp-a" aria-label="From quarter"></select><span class="muted">→</span><select id="cmp-b" aria-label="To quarter"></select></div>
+      <div class="tbl-wrap" id="cmp-table"></div>
+    </div>
+    <div class="card">
+      <h2>Export report</h2><p class="hint">Executive infographic for the selected quarter and managers</p>
+      <div class="exports" id="exports"></div>
+      <h3>Data sources</h3>
+      <div class="src" id="sources"></div>
+      <h3>Notes &amp; methodology</h3>
+      <ul class="notes" id="notes"></ul>
+    </div>
+  </section>
+</div>
+
+<footer class="wrap site-foot" style="margin-top:0">
+  <span>Data: SEC Form N-PORT and NBIM holdings disclosures; IDX Composite via Yahoo Finance. Values cover the listed fund vehicles only.</span>
+  <span>Built with Claude Code · For information only, not investment advice</span>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <header><div style="flex:1"><div class="eyebrow" style="color:var(--muted)" id="d-eyebrow"></div><h2 id="d-title"></h2><div class="muted sm" id="d-sub"></div></div>
+    <button class="btn" id="d-close">Close</button></header>
+  <div class="body" id="d-body"></div>
+</aside>
+<div class="toast hidden" id="toast"><div class="spin" id="toast-spin"></div><span id="toast-msg"></span></div>
+
+<script>window.STATIC_DATA_URL = "data.json";</script>
+<script>
+const $ = (s) => document.querySelector(s);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const charts = {};
+let META = null, REPORT = null, Q = null, SEL = null; // SEL = Set of selected manager keys
+let trendMode = "usd";
+
+// ---------- storage (per-viewer convenience only) ----------
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+
+// ---------- formatting ----------
+function fmtUsd(x, d = 1) {
+  if (x === null || x === undefined || Number.isNaN(x)) return "—";
+  const s = x < 0 ? "-" : "", a = Math.abs(x);
+  if (a >= 1e9) return `${s}$${(a / 1e9).toFixed(2)}B`;
+  if (a >= 1e6) return `${s}$${(a / 1e6).toFixed(d)}M`;
+  if (a >= 1e3) return `${s}$${(a / 1e3).toFixed(d)}K`;
+  return `${s}$${a.toFixed(0)}`;
+}
+const signed = (x) => (x === null || x === undefined) ? "—" : (x >= 0 ? "+" : "") + fmtUsd(x);
+const fmtPct = (x, sg = true) => (x === null || x === undefined) ? "—" : (sg && x >= 0 ? "+" : "") + x.toFixed(1) + "%";
+const dir = (x) => x === null || x === undefined ? "flat" : (x >= 0 ? "up" : "down");
+const arrow = (x) => x === null || x === undefined ? "" : (x >= 0 ? "▲" : "▼");
+const esc = (s) => String(s ?? "—").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tk = (t) => t ? `<span class="tk">${esc(t)}</span>` : `<span class="tk none">—</span>`;
+const dot = (k) => `<span class="sdot" style="background:${managerColor(k)}"></span>`;
+
+// Color follows the manager (fixed by priority rank), never its position in a list.
+function managerColor(key) {
+  const i = [...META.managers].sort((a, b) => a.rank - b.rank).findIndex((m) => m.key === key);
+  return i >= 0 && i < 7 ? css(`--s${i + 1}`) : css("--other");
+}
+const mName = (k) => (META.managers.find((m) => m.key === k) || {}).name || k;
+
+// Static mode: the hosted snapshot ships its data as data.json instead of a live API.
+let STATIC = null;
+const US_ONLY = () => META.managers.filter((m) => m.key !== "nbim").map((m) => m.key).sort().join(",");
+function staticApi(path) {
+  const u = new URL(path, location.href), p = u.searchParams, q = p.get("q");
+  const variant = () => { const m = p.get("m"); if (!m) return "all"; if (m.split(",").sort().join(",") === US_ONLY()) return "us";
+    throw new Error("In the hosted snapshot you can switch between All and US funds only"); };
+  switch (u.pathname.split("/").pop()) {
+    case "meta": return STATIC.meta;
+    case "flows": return STATIC.flows;
+    case "refresh": return { running: false };
+    case "report": {
+      let qq = q;
+      if (p.get("date")) { const d = new Date(p.get("date")); qq = `${d.getFullYear()}Q${Math.floor(d.getMonth() / 3) + 1}`; }
+      qq = qq || STATIC.meta.latest;
+      const r = STATIC.reports[variant()][qq];
+      if (!r) throw new Error(`No data for ${qq}`);
+      return r;
+    }
+    case "manager": { const d = (STATIC.drill[q] || {})[p.get("m")]; if (!d) throw new Error("No positions"); return d; }
+    case "compare": {
+      const v = variant(), A = STATIC.reports[v][p.get("a")], B = STATIC.reports[v][p.get("b")];
+      const keys = [...new Set([...A.managers, ...B.managers].map((m) => m.manager_key))];
+      const rows = keys.map((k) => {
+        const a = A.managers.find((m) => m.manager_key === k), b = B.managers.find((m) => m.manager_key === k);
+        const va = a ? a.value_usd : null, vb = b ? b.value_usd : null;
+        return { manager_key: k, manager_name: (a || b).manager_name, value_usd_a: va, value_usd_b: vb,
+          delta_usd: va !== null && vb !== null ? vb - va : null, delta_pct: va && vb !== null ? (vb - va) / va * 100 : null };
+      }).sort((x, y) => (y.value_usd_b || 0) - (x.value_usd_b || 0));
+      return { a: p.get("a"), b: p.get("b"), rows };
+    }
+  }
+  throw new Error("Not available in the hosted snapshot");
+}
+
+async function api(path, opts) {
+  if (STATIC) return staticApi(path);
+  $("#app").classList.add("busy");
+  try {
+    const r = await fetch(path, opts);
+    const j = await r.json();
+    if (!r.ok && r.status !== 409) throw new Error(j.error || r.statusText);
+    return j;
+  } finally { $("#app").classList.remove("busy"); }
+}
+function mParam() {
+  if (!SEL || SEL.size === META.managers.length) return "";
+  return "&m=" + [...SEL].join(",");
+}
+
+// ---------- chart helpers ----------
+function tooltip() {
+  return { backgroundColor: css("--surface"), titleColor: css("--ink"), bodyColor: css("--ink2"), footerColor: css("--ink"),
+    borderColor: css("--axis"), borderWidth: 1, padding: 12, cornerRadius: 10, boxPadding: 4,
+    titleFont: { family: "Inter", weight: "600" }, bodyFont: { family: "Inter" }, footerFont: { family: "Inter", weight: "600" } };
+}
+function draw(id, cfg) { if (charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), cfg); }
+
+// ---------- renderers ----------
+function renderHero(r) {
+  $("#h-eyebrow").textContent = `${r.quarter} · as of ${new Date(r.as_of + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}`;
+  $("#h-total").textContent = fmtUsd(r.total_usd);
+  const p = $("#h-pill");
+  p.className = "pill " + dir(r.qoq_usd);
+  p.textContent = r.qoq_usd === null ? "No prior-quarter comparison" : `${arrow(r.qoq_usd)} ${signed(r.qoq_usd)} (${fmtPct(r.qoq_pct)}) QoQ`;
+  $("#h-sub").textContent = r.prev_total_usd === null ? "" : `vs ${fmtUsd(r.prev_total_usd)} last quarter, same managers`;
+  $("#banner").classList.toggle("hidden", !r.provisional);
+
+  const h = r.history, cur = h.quarters.indexOf(r.quarter);
+  $("#sp-first").textContent = h.quarters[0] || ""; $("#sp-last").textContent = h.quarters.at(-1) || "";
+  draw("c-spark", {
+    type: "line",
+    data: { labels: h.quarters, datasets: [{ data: h.total, borderColor: "#9ec5f4", borderWidth: 2, tension: 0.3, fill: true,
+      backgroundColor: (ctx) => { const { ctx: c, chartArea: a } = ctx.chart; if (!a) return "transparent";
+        const g = c.createLinearGradient(0, a.top, 0, a.bottom); g.addColorStop(0, "rgba(158,197,244,.45)"); g.addColorStop(1, "rgba(158,197,244,0)"); return g; },
+      pointRadius: (c) => c.dataIndex === cur ? 5 : 0, pointBackgroundColor: "#ffffff", pointBorderColor: "#3987e5", pointBorderWidth: 2,
+      pointHoverRadius: 5, pointHitRadius: 10 }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+      interaction: { mode: "index", intersect: false },
+      onClick: (_e, el) => { if (el.length) load(h.quarters[el[0].index]); },
+      onHover: (e, el) => { e.native.target.style.cursor = el.length ? "pointer" : "default"; },
+      scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+      plugins: { legend: { display: false }, tooltip: { ...tooltip(), displayColors: false,
+        callbacks: { label: (c) => fmtUsd(c.raw) } } } },
+  });
+}
+
+function renderKpis(r) {
+  const stale = r.managers.filter((m) => m.stale).length;
+  $("#k-mgr").textContent = `${r.managers.length} / ${r.n_managers_tracked}`;
+  $("#k-mgr-s").textContent = stale ? `${stale} using an earlier snapshot (†)` : "All with a filing this quarter";
+  $("#k-sec").textContent = r.n_securities.toLocaleString();
+  $("#k-conc").textContent = r.top10_share === null ? "—" : fmtPct(r.top10_share, false);
+  if (r.top1) {
+    $("#k-top").innerHTML = `${tk(r.top1.ticker)}<span class="num">${fmtPct(r.top1.share, false)}</span>`;
+    $("#k-top-s").textContent = `${r.top1.issuer_name} · share of total`;
+  } else { $("#k-top").textContent = "—"; $("#k-top-s").textContent = ""; }
+}
+
+function renderManagers(r) {
+  const m = r.managers, max = Math.max(...m.map((x) => x.value_usd), 1);
+  $("#managers-list").innerHTML = m.length ? m.map((x) => `
+    <div class="ritem click" data-key="${x.manager_key}" title="Click for ${esc(x.manager_name)}'s positions">
+      <div class="n">${x.rank}</div>
+      <div class="name"><span class="dot" style="background:${managerColor(x.manager_key)}"></span><span class="t">${esc(x.manager_name)}${x.stale ? " †" : ""}</span></div>
+      <div class="right"><span class="pill sm ${dir(x.delta_pct)}">${x.delta_pct === null ? "new" : arrow(x.delta_pct) + " " + fmtPct(x.delta_pct)}</span><span class="val">${fmtUsd(x.value_usd)}</span></div>
+      <div class="barline"><i class="${x.stale ? "stale" : ""}" style="width:${(x.value_usd / max * 100).toFixed(1)}%"></i></div>
+    </div>`).join("") : '<div class="empty">No data for the selected managers this quarter</div>';
+  document.querySelectorAll("#managers-list .ritem").forEach((el) => el.onclick = () => openDrawer(el.dataset.key));
+  $("#managers-table").innerHTML = table(["#", "Manager", "Value", "Prior Q", "QoQ", "Share", "Names"],
+    m.map((x) => [x.rank, dot(x.manager_key) + esc(x.manager_name) + (x.stale ? " †" : ""), fmtUsd(x.value_usd), fmtUsd(x.value_usd_prev),
+      `<span class="${dir(x.delta_pct)}">${fmtPct(x.delta_pct)}</span>`, fmtPct(x.share_of_total, false), x.n_securities]), [0, 2, 3, 4, 5, 6]);
+}
+
+function renderTop(r) {
+  const t = r.top, max = Math.max(...t.map((x) => x.value_usd), 1);
+  $("#top-list").innerHTML = t.length ? t.map((x) => `
+    <div class="ritem" title="${esc(x.issuer_name)} · ${esc(x.sector)} · ISIN ${esc(x.isin || "—")}">
+      <div class="n">${x.rank}</div>
+      <div class="name">${tk(x.ticker)}<span class="t">${esc(x.issuer_name)}</span></div>
+      <div class="right"><span class="holders">${x.n_holders} holder${x.n_holders === 1 ? "" : "s"}</span>
+        <span class="sm ${dir(x.delta_pct)}">${fmtPct(x.delta_pct)}</span><span class="val">${fmtUsd(x.value_usd)}</span></div>
+      <div class="barline"><i style="width:${(x.value_usd / max * 100).toFixed(1)}%"></i></div>
+    </div>`).join("") : '<div class="empty">No holdings</div>';
+  $("#top-table").innerHTML = table(["#", "Ticker", "Issuer", "Sector", "ISIN", "Value", "QoQ", "Holders"],
+    t.map((x) => [x.rank, esc(x.ticker), esc(x.issuer_name), esc(x.sector), esc(x.isin || "—"), fmtUsd(x.value_usd),
+      `<span class="${dir(x.delta_pct)}">${fmtPct(x.delta_pct)}</span>`, x.n_holders]), [0, 5, 6, 7]);
+}
+
+function renderTrend(r) {
+  const h = r.history;
+  const byRank = [...META.managers].sort((a, b) => a.rank - b.rank).map((m) => m.key);
+  const main = h.series.filter((s) => byRank.indexOf(s.key) < 7).sort((a, b) => a.rank - b.rank);
+  const rest = h.series.filter((s) => !main.includes(s));
+  const series = main.map((s) => ({ ...s, color: managerColor(s.key) }));
+  if (rest.length) series.push({ key: "_other", color: css("--other"),
+    name: rest.length === 1 ? rest[0].name : "Other (" + rest.map((s) => s.name.replace(/ (Fund Advisors|International Capital|Investments.*|Group.*)$/, "")).join(", ") + ")",
+    values: h.quarters.map((_, i) => rest.reduce((a, s) => a + (s.values[i] || 0), 0)) });
+  const totals = h.quarters.map((_, i) => series.reduce((a, s) => a + (s.values[i] || 0), 0));
+  const val = (s, i) => trendMode === "pct" ? (totals[i] ? (s.values[i] || 0) / totals[i] * 100 : 0) : (s.values[i] || 0);
+  const cur = h.quarters.indexOf(r.quarter);
+  const tick = { color: css("--muted"), font: { family: "Inter", size: 11 } };
+  draw("c-trend", {
+    type: "line",
+    data: { labels: h.quarters, datasets: series.map((s) => ({
+      label: s.name, data: h.quarters.map((_, i) => val(s, i)), fill: true, stack: "a",
+      backgroundColor: s.color, borderColor: css("--surface"), borderWidth: 1.2, pointRadius: 0, pointHoverRadius: 3, tension: 0.25 })) },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+      interaction: { mode: "index", intersect: false },
+      onClick: (_e, el) => { if (el.length) load(h.quarters[el[0].index]); },
+      scales: {
+        x: { grid: { display: false }, border: { color: css("--axis") }, ticks: { ...tick, maxRotation: 0, autoSkipPadding: 14 } },
+        y: { stacked: true, beginAtZero: true, min: 0, max: trendMode === "pct" ? 100 : undefined,
+          grid: { color: css("--grid") }, border: { display: false },
+          ticks: { ...tick, callback: (v) => trendMode === "pct" ? v + "%" : fmtUsd(v, 0) } } },
+      plugins: {
+        legend: { position: "top", align: "start", labels: { color: css("--ink2"), boxWidth: 10, boxHeight: 10, useBorderRadius: true, borderRadius: 5, padding: 14, font: { family: "Inter", size: 12 } } },
+        tooltip: { ...tooltip(), itemSort: (a, b) => b.raw - a.raw,
+          callbacks: { label: (c) => ` ${c.dataset.label}: ${trendMode === "pct" ? c.raw.toFixed(1) + "%" : fmtUsd(c.raw)}`,
+            footer: (items) => trendMode === "pct" ? "" : "Total: " + fmtUsd(items.reduce((a, i) => a + i.raw, 0)) } } } },
+    plugins: [{ id: "cur", afterDatasetsDraw(chart) {
+      if (cur < 0) return;
+      const { ctx, chartArea: a, scales: { x } } = chart, px = x.getPixelForValue(cur);
+      ctx.save(); ctx.strokeStyle = css("--ink"); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke(); ctx.restore(); } }],
+  });
+}
+
+function renderSectors(r) {
+  const s = r.sectors, max = Math.max(...s.map((x) => x.share_pct), 1);
+  $("#sectors-list").innerHTML = s.length ? s.map((x) => `
+    <div class="ritem" title="${esc(x.sector)}: ${fmtUsd(x.value_usd)}">
+      <div class="n"></div><div class="name"><span class="t">${esc(x.sector)}</span></div>
+      <div class="right"><span class="muted sm">${fmtUsd(x.value_usd)}</span><span class="val">${x.share_pct.toFixed(1)}%</span></div>
+      <div class="barline"><i style="width:${(x.share_pct / max * 100).toFixed(1)}%"></i></div>
+    </div>`).join("") : '<div class="empty">No sector data</div>';
+}
+
+function renderMovers(r) {
+  const m = [...r.movers].sort((a, b) => b.delta_usd - a.delta_usd);
+  if (!m.length) { $("#movers-list").innerHTML = '<div class="empty">No prior-quarter comparison available</div>'; return; }
+  const max = Math.max(...m.map((x) => Math.abs(x.delta_usd)), 1);
+  $("#movers-list").innerHTML = `<div class="mv-head"><span>Security</span><span><span>◀ decrease</span><span>increase ▶</span></span><span style="text-align:right">Δ USD</span></div>` +
+    m.map((x) => {
+      const w = Math.abs(x.delta_usd) / max * 50, pos = x.delta_usd >= 0;
+      return `<div class="mv" title="${esc(x.issuer_name)}: ${signed(x.delta_usd)} (${fmtPct(x.delta_pct)})">
+        <div class="name">${tk(x.ticker)}<span class="t">${esc(x.issuer_name)}</span></div>
+        <div class="track"><i style="background:${pos ? css("--pos") : css("--neg")};${pos ? "left:50%" : "right:50%"};width:${w.toFixed(1)}%"></i></div>
+        <div class="v ${pos ? "up" : "down"}">${signed(x.delta_usd)}</div></div>`;
+    }).join("");
+}
+
+function table(head, rows, right = []) {
+  const th = head.map((h, i) => `<th class="${right.includes(i) ? "r" : ""}">${h}</th>`).join("");
+  const tr = rows.map((r) => "<tr>" + r.map((c, i) => `<td class="${right.includes(i) ? "r" : ""}">${c}</td>`).join("") + "</tr>").join("");
+  return `<table><thead><tr>${th}</tr></thead><tbody>${tr || `<tr><td colspan="${head.length}" class="empty">No data</td></tr>`}</tbody></table>`;
+}
+
+function renderExtras(r) {
+  $("#notes").innerHTML = r.notes.map((n) => `<li>${esc(n)}</li>`).join("");
+  if (STATIC && !STATIC.pdfs.length) {
+    $("#exports").innerHTML = `<span class="muted sm">PNG and PDF reports are generated by the local app (<code>python main.py report --quarter ${r.quarter}</code>).</span>`;
+    return;
+  }
+  if (STATIC) {
+    const ok = STATIC.pdfs.includes(r.quarter) && !mParam();
+    $("#exports").innerHTML = ok ? `<a class="btn primary" href="reports/IDX_Foreign_Ownership_${r.quarter}.pdf" target="_blank" rel="noopener">⬇ PDF report · ${r.quarter}</a>`
+      : `<span class="muted sm">PDF available for all managers only.</span>`;
+    return;
+  }
+  const mp = mParam();
+  $("#exports").innerHTML = [["pdf", "light", "PDF report"], ["png", "light", "PNG infographic"], ["pdf", "dark", "PDF · dark"], ["png", "dark", "PNG · dark"]]
+    .map(([f, t, l], i) => `<a class="btn ${i === 0 ? "primary" : ""}" href="/api/export?q=${r.quarter}&fmt=${f}&theme=${t}${mp}">⬇ ${l}</a>`).join("");
+}
+
+function renderSources() {
+  $("#sources").innerHTML = META.coverage.map((c) => `<div>${dot(c.key)}${esc(mName(c.key))} <span class="muted">· ${c.funds.join(", ")} · ${c.source}</span></div>
+    <div class="muted">${c.last ? "latest " + c.last : "no data"}</div>`).join("");
+  const lu = META.last_updated ? new Date(META.last_updated.replace(" ", "T") + "Z") : null;
+  $("#updated").textContent = lu ? `${STATIC ? "Snapshot of data downloaded" : "Data downloaded"} ${lu.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}` : "";
+}
+
+// ---------- flow study ----------
+async function renderStudy() {
+  let f;
+  try { f = await api("/api/flows"); }
+  catch (e) { $("#study-body").innerHTML = `<div class="empty">Study unavailable: ${esc(e.message)}</div>`;
+    $("#period-body").innerHTML = `<div class="empty">Flow data unavailable</div>`; return; }
+  if (!FLOWS) setupPeriod(f); else renderPeriod();
+  const next1 = f.tests.find((t) => t.label === "Next 1 quarter") || {}, prior = f.tests.find((t) => t.label.startsWith("Prior")) || {};
+  const head = f.verdict === "predictive" ? "Yes, flows have led returns"
+    : f.verdict === "contrarian" ? "Flows have pointed the wrong way" : "No reliable signal";
+  const pct = (x) => x === null || x === undefined ? "—" : Math.round(x * 100) + "%";
+  $("#study-body").innerHTML = `
+    <div class="verdict"><div class="big2">${head}</div>
+      <p>Across ${next1.n || "—"} quarters, the funds' net buying had a correlation of <b>${(next1.corr ?? 0).toFixed(2)}</b> with the next quarter's IDX return
+      (t = ${(next1.t ?? 0).toFixed(2)}; |t| ≥ 2 would be significant). Calling each quarter in real time from past data alone got
+      <b>${pct(f.oos_hit_rate)}</b> of directions right, about a coin flip. If anything the funds lean toward <b>following</b> the market:
+      flows correlate ${(prior.corr ?? 0) >= 0 ? "+" : ""}${(prior.corr ?? 0).toFixed(2)} with the <i>previous</i> quarter's return.</p></div>
+    <div class="study">
+      <div>
+        <div class="mini-title">Net flow into IDX stocks, % of the funds' holdings</div>
+        <div style="height:170px;position:relative"><canvas id="c-flow"></canvas></div>
+        <div class="mini-title" style="margin-top:10px">IDX Composite return (USD) in the <b>following</b> quarter</div>
+        <div style="height:170px;position:relative"><canvas id="c-fwd"></canvas></div>
+      </div>
+      <div>
+        <div class="mini-title">Each dot is a quarter: flows (x) vs next-quarter return (y)</div>
+        <div style="height:230px;position:relative"><canvas id="c-scatter"></canvas></div>
+        <div class="tbl-wrap" style="margin-top:10px">${table(["Flows vs IDX return…", "Corr.", "t-stat", "Same sign", ""],
+          f.tests.map((t) => [esc(t.label), (t.corr >= 0 ? "+" : "") + t.corr.toFixed(2), t.t.toFixed(2), pct(t.hit),
+            `<span class="sig ${t.significant ? "yes" : "no"}">${t.significant ? "significant" : "not significant"}</span>`]), [1, 2, 3])}</div>
+      </div>
+    </div>
+    <ul class="notes" style="margin-top:12px">${f.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>`;
+
+  const rows = f.rows, labels = rows.map((r) => r.quarter);
+  const tick = { color: css("--muted"), font: { family: "Inter", size: 10.5 } };
+  const bars = (id, vals, fmt, title) => draw(id, {
+    type: "bar",
+    data: { labels, datasets: [{ data: vals, backgroundColor: vals.map((v) => v === null ? "transparent" : v >= 0 ? css("--pos") : css("--neg")),
+      borderRadius: 3, borderSkipped: false, barPercentage: 0.8, categoryPercentage: 0.9 }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+      scales: { x: { grid: { display: false }, ticks: { ...tick, maxRotation: 0, autoSkipPadding: 12 }, border: { color: css("--axis") } },
+        y: { grid: { color: css("--grid") }, border: { display: false }, ticks: { ...tick, callback: (v) => v + "%" } } },
+      plugins: { legend: { display: false }, tooltip: { ...tooltip(), displayColors: false, callbacks: { title: (c) => title(c[0].dataIndex), label: (c) => fmt(c.dataIndex) } } } },
+  });
+  bars("c-flow", rows.map((r) => r.flow_pct), (i) => `${fmtPct(rows[i].flow_pct)} · ${signed(rows[i].flow_usd)} net`, (i) => rows[i].quarter + " flows");
+  bars("c-fwd", rows.map((r) => r.fwd1), (i) => rows[i].fwd1 === null ? "Not yet known" : `${fmtPct(rows[i].fwd1)} IDX (USD)`, (i) => `Return in the quarter after ${rows[i].quarter}`);
+
+  const pts = rows.filter((r) => r.fwd1 !== null).map((r) => ({ x: r.flow_pct, y: r.fwd1, q: r.quarter }));
+  const n = pts.length, mx = pts.reduce((a, p) => a + p.x, 0) / n, my = pts.reduce((a, p) => a + p.y, 0) / n;
+  const b = pts.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0) / pts.reduce((a, p) => a + (p.x - mx) ** 2, 0), a0 = my - b * mx;
+  const xs = [Math.min(...pts.map((p) => p.x)), Math.max(...pts.map((p) => p.x))];
+  draw("c-scatter", {
+    type: "scatter",
+    data: { datasets: [
+      { data: pts, backgroundColor: css("--accent"), borderColor: css("--surface"), borderWidth: 2, pointRadius: 5, pointHoverRadius: 7 },
+      { type: "line", data: xs.map((x) => ({ x, y: a0 + b * x })), borderColor: css("--muted"), borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 } ] },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+      scales: { x: { title: { display: true, text: "Net flow, % of holdings", color: css("--muted"), font: { size: 11 } }, grid: { color: css("--grid") }, ticks: { ...tick, callback: (v) => v + "%" } },
+        y: { title: { display: true, text: "Next-quarter IDX return (USD)", color: css("--muted"), font: { size: 11 } }, grid: { color: css("--grid") }, ticks: { ...tick, callback: (v) => v + "%" } } },
+      plugins: { legend: { display: false }, tooltip: { ...tooltip(), displayColors: false, filter: (c) => c.datasetIndex === 0,
+        callbacks: { label: (c) => `${c.raw.q}: flows ${fmtPct(c.raw.x)}, next quarter ${fmtPct(c.raw.y)}` } } } },
+  });
+}
+
+// ---------- net flow over a chosen period ----------
+let FLOWS = null;
+function windowStats(rows, i, j) {  // inclusive row indices
+  const w = rows.slice(i, j + 1);
+  const cum = w.reduce((a, r) => a + r.flow_usd, 0);
+  const base = rows[i].aum0 || 0;
+  const during = (w.reduce((a, r) => a * (1 + (r.ret ?? 0) / 100), 1) - 1) * 100;
+  return { start: rows[i].quarter, end: rows[j].quarter, k: w.length, cum, pct: base ? cum / base * 100 : null,
+    during, fwd1: rows[j].fwd1, fwd4: rows[j].fwd4 };
+}
+function renderPeriod() {
+  if (!FLOWS) return;
+  const rows = FLOWS.rows, qs = rows.map((r) => r.quarter);
+  const ia = qs.indexOf($("#pf-a").value), ib = qs.indexOf($("#pf-b").value);
+  if (ia < 0 || ib < 0) return;
+  const i = Math.min(ia, ib), j = Math.max(ia, ib);
+  const sel = windowStats(rows, i, j), k = sel.k;
+  const all = [];
+  for (let s0 = 0; s0 + k - 1 < rows.length; s0++) all.push(windowStats(rows, s0, s0 + k - 1));
+  const others = all.filter((w) => w.start !== sel.start);
+  const out = sel.cum < 0;
+  const moreExtreme = all.filter((w) => out ? w.pct < sel.pct : w.pct > sel.pct).length;
+  const rank = moreExtreme + 1;
+  const rankText = all.length < 3 ? `Only ${all.length} stretch${all.length === 1 ? "" : "es"} of this length exist`
+    : rank === 1 ? `The largest ${out ? "outflow" : "inflow"} of any ${k}-quarter stretch since ${qs[0]}`
+    : `#${rank} largest ${out ? "outflow" : "inflow"} of ${all.length} ${k}-quarter stretches`;
+
+  // Historical analogues: other windows of the same length with flows in the same direction at least half as large.
+  const similar = others.filter((w) => w.pct !== null && Math.sign(w.pct) === Math.sign(sel.pct) && Math.abs(w.pct) >= Math.abs(sel.pct) / 2);
+  const avg = (xs) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  const known = (ws, key) => ws.map((w) => w[key]).filter((v) => v !== null && v !== undefined);
+  const row = (label, ws) => {
+    const f1 = known(ws, "fwd1"), f4 = known(ws, "fwd4");
+    return [label, ws.length, fmtPct(avg(f1)), fmtPct(avg(f4)), f4.length ? Math.round(f4.filter((v) => v > 0).length / f4.length * 100) + "%" : "—"];
+  };
+  const simKnown = known(similar, "fwd4").length;
+  let answer;
+  if (simKnown < 5) {
+    answer = `<b>History can't answer this one.</b> Only ${simKnown} earlier ${k}-quarter stretch${simKnown === 1 ? "" : "es"} had ${out ? "selling" : "buying"} this heavy with a known outcome a year later. That is far too few to say whether IHSG tends to rise or fall afterwards; one or two cases can point either way by chance. The study above also found no reliable link between these funds' flows and IHSG's next moves.`;
+  } else {
+    const a4 = avg(known(similar, "fwd4")), b4 = avg(known(all, "fwd4"));
+    answer = `After the ${simKnown} most similar stretches, IHSG returned <b>${fmtPct(a4)}</b> over the next year on average (in USD), versus <b>${fmtPct(b4)}</b> after all stretches. These stretches overlap and the sample is small, so treat this as context, not a forecast.`;
+  }
+
+  $("#period-body").innerHTML = `
+    <div class="pstats">
+      <div class="pstat"><div class="label">Net ${out ? "selling" : "buying"} ${sel.start} → ${sel.end}</div>
+        <div class="value num ${out ? "down" : "up"}">${signed(sel.cum)}</div>
+        <div class="sub">${fmtPct(sel.pct)} of what the funds held at the start · ${k} quarter${k > 1 ? "s" : ""}</div></div>
+      <div class="pstat"><div class="label">How unusual</div>
+        <div class="value num">${all.length >= 3 ? `#${rank} of ${all.length}` : "—"}</div>
+        <div class="sub">${rankText}</div></div>
+      <div class="pstat"><div class="label">IHSG during the period (USD)</div>
+        <div class="value num ${sel.during >= 0 ? "up" : "down"}">${fmtPct(sel.during)}</div>
+        <div class="sub">Next quarter: ${fmtPct(sel.fwd1)} · next year: ${sel.fwd4 === null || sel.fwd4 === undefined ? "not known yet" : fmtPct(sel.fwd4)}</div></div>
+    </div>
+    <div class="mini-title">Quarterly net flow, selected period highlighted</div>
+    <div style="height:180px;position:relative"><canvas id="c-period"></canvas></div>
+    <div class="mini-title" style="margin-top:14px">What IHSG did after past ${k}-quarter stretches (USD)</div>
+    <div class="tbl-wrap">${table(["Stretches", "Count", "Next quarter (avg)", "Next year (avg)", "Next year up"], [
+      row(`${out ? "Selling" : "Buying"} at least half as heavy as yours`, similar),
+      row(`All ${k}-quarter stretches`, all)], [1, 2, 3, 4])}</div>
+    <div class="answer">${answer}</div>`;
+
+  draw("c-period", {
+    type: "bar",
+    data: { labels: qs, datasets: [{ data: rows.map((r) => r.flow_usd),
+      backgroundColor: rows.map((r, n) => n < i || n > j ? css("--muted") + "66" : r.flow_usd >= 0 ? css("--pos") : css("--neg")),
+      borderRadius: 3, borderSkipped: false, barPercentage: 0.8, categoryPercentage: 0.9 }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+      onClick: (_e, el) => { if (el.length) { const q = qs[el[0].index]; if (el[0].index < i) $("#pf-a").value = q; else $("#pf-b").value = q; renderPeriod(); } },
+      scales: { x: { grid: { display: false }, border: { color: css("--axis") }, ticks: { color: css("--muted"), font: { family: "Inter", size: 10.5 }, maxRotation: 0, autoSkipPadding: 12 } },
+        y: { grid: { color: css("--grid") }, border: { display: false }, ticks: { color: css("--muted"), font: { family: "Inter", size: 10.5 }, callback: (v) => fmtUsd(v, 0) } } },
+      plugins: { legend: { display: false }, tooltip: { ...tooltip(), displayColors: false,
+        callbacks: { label: (c) => `${signed(rows[c.dataIndex].flow_usd)} (${fmtPct(rows[c.dataIndex].flow_pct)} of holdings)`, footer: () => "Click to extend the period" } } } },
+  });
+}
+function setupPeriod(f) {
+  FLOWS = f;
+  const qs = f.rows.map((r) => r.quarter);
+  const opts = qs.map((q) => `<option value="${q}">${q}</option>`).join("");
+  $("#pf-a").innerHTML = opts; $("#pf-b").innerHTML = opts;
+  $("#pf-b").value = qs.at(-1); $("#pf-a").value = qs[Math.max(0, qs.length - 8)];
+  $("#pf-a").onchange = renderPeriod; $("#pf-b").onchange = renderPeriod;
+  renderPeriod();
+}
+
+// ---------- period + manager controls ----------
+function renderYears() {
+  const years = [...new Set(META.quarters.map((q) => q.slice(0, 4)))];
+  $("#years").innerHTML = years.reverse().map((y) => `<div class="yrow"><div class="y">${y}</div>${[1, 2, 3, 4].map((n) => {
+    const q = `${y}Q${n}`, ok = META.quarters.includes(q), prov = META.provisional.includes(q);
+    return `<button class="qchip ${q === Q ? "on" : ""} ${prov ? "prov" : ""}" data-q="${q}" ${ok ? "" : "disabled"} title="${ok ? q + (prov ? " (provisional)" : "") : "No data yet"}">Q${n}</button>`;
+  }).join("")}</div>`).join("");
+  document.querySelectorAll(".qchip[data-q]:not([disabled])").forEach((b) => b.onclick = () => load(b.dataset.q));
+  const i = META.quarters.indexOf(Q);
+  $("#prev").disabled = i <= 0; $("#next").disabled = i >= META.quarters.length - 1;
+}
+function renderChips() {
+  const sorted = [...META.managers].sort((a, b) => a.rank - b.rank);
+  $("#mchips").innerHTML = sorted.map((m) => `<button class="mchip ${SEL.has(m.key) ? "" : "off"}" data-key="${m.key}" aria-pressed="${SEL.has(m.key)}">
+    <span class="dot" style="background:${managerColor(m.key)}"></span>${esc(m.name)}</button>`).join("");
+  document.querySelectorAll(".mchip").forEach((b) => b.onclick = () => {
+    if (STATIC) return toast("In the hosted snapshot, use All or US funds only", 2600);
+    const k = b.dataset.key;
+    if (SEL.has(k)) { if (SEL.size === 1) return toast("Keep at least one manager selected", 2200); SEL.delete(k); } else SEL.add(k);
+    afterSelChange();
+  });
+  $("#m-note").textContent = (SEL.size === META.managers.length ? "Showing all 10 managers." : `Showing ${SEL.size} of ${META.managers.length} managers.`)
+    + (STATIC ? " (Hosted snapshot: use the All / US funds only presets.)" : " Your selection is remembered in this browser.");
+}
+function afterSelChange() {
+  store.set("idx.managers", [...SEL].join(","));
+  renderChips(); load(Q);
+}
+
+// ---------- drawer ----------
+async function openDrawer(key) {
+  const d = await api(`/api/manager?q=${Q}&m=${key}`);
+  $("#d-eyebrow").innerHTML = `${dot(key)}${d.quarter}`;
+  $("#d-title").textContent = d.manager;
+  $("#d-sub").textContent = `${d.positions.filter((p) => p.value_usd > 0).length} IDX positions · ${fmtUsd(d.total_usd)} total`;
+  $("#d-body").innerHTML = table(["Ticker", "Issuer", "Value", "Weight", "Δ vs prior Q"],
+    d.positions.map((p) => [tk(p.ticker), `<span title="${esc(p.sector)}">${esc(p.issuer_name)}</span>`, fmtUsd(p.value_usd),
+      fmtPct(p.weight_pct, false), p.value_usd_prev ? `<span class="${dir(p.delta_usd)}">${signed(p.delta_usd)}</span>` : '<span class="pill sm up">new</span>']), [2, 3, 4]);
+  $("#drawer").classList.add("open"); $("#scrim").classList.add("open"); $("#drawer").setAttribute("aria-hidden", "false");
+}
+function closeDrawer() { $("#drawer").classList.remove("open"); $("#scrim").classList.remove("open"); $("#drawer").setAttribute("aria-hidden", "true"); }
+
+// ---------- compare ----------
+async function renderCompare() {
+  const a = $("#cmp-a").value, b = $("#cmp-b").value;
+  if (!a || !b) return;
+  const d = await api(`/api/compare?a=${a}&b=${b}${mParam()}`);
+  $("#cmp-table").innerHTML = table(["Manager", a, b, "Δ USD", "Δ %"],
+    d.rows.map((x) => [dot(x.manager_key) + esc(x.manager_name), fmtUsd(x.value_usd_a), fmtUsd(x.value_usd_b),
+      `<span class="${dir(x.delta_usd)}">${signed(x.delta_usd)}</span>`, `<span class="${dir(x.delta_pct)}">${fmtPct(x.delta_pct)}</span>`]), [1, 2, 3, 4]);
+}
+
+// ---------- refresh ----------
+let toastTimer = null;
+function toast(msg, ms, spinning = false) {
+  $("#toast-msg").textContent = msg; $("#toast-spin").classList.toggle("hidden", !spinning);
+  $("#toast").classList.remove("hidden"); clearTimeout(toastTimer);
+  if (ms) toastTimer = setTimeout(() => $("#toast").classList.add("hidden"), ms);
+}
+async function startRefresh() {
+  await api("/api/refresh", { method: "POST" });
+  pollRefresh();
+}
+async function pollRefresh() {
+  $("#refresh").disabled = true;
+  let s;
+  while (true) {
+    s = await (await fetch("/api/refresh")).json();
+    if (!s.running) break;
+    toast(s.message || "Downloading new filings…", 0, true);
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+  $("#refresh").disabled = false;
+  toast(s.error ? `Refresh failed: ${s.error}` : (s.message || "Up to date"), 6000);
+  if (!s.error) { META = await api("/api/meta"); setupQuarterSelects(); if (META.quarters.length) load(Q && META.quarters.includes(Q) ? Q : META.latest); }
+}
+
+// ---------- theme ----------
+function applyTheme(t) {
+  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
+  document.querySelectorAll("#theme button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
+  store.set("idx.theme", t);
+  if (REPORT) { renderAll(); renderStudy(); }
+}
+
+// ---------- main ----------
+async function load(q) {
+  REPORT = await api(`/api/report?q=${q}${mParam()}`);
+  Q = REPORT.quarter;
+  try { history.replaceState(null, "", `?q=${Q}`); } catch (e) {}
+  renderAll(); renderCompare();
+}
+function renderAll() {
+  const r = REPORT;
+  renderYears(); renderChips(); renderHero(r); renderKpis(r); renderManagers(r); renderTop(r);
+  renderTrend(r); renderSectors(r); renderMovers(r); renderExtras(r); renderSources();
+}
+function setupQuarterSelects() {
+  const opts = [...META.quarters].reverse().map((q) => `<option value="${q}">${q}${META.provisional.includes(q) ? " (provisional)" : ""}</option>`).join("");
+  const a = $("#cmp-a").value, b = $("#cmp-b").value;
+  $("#cmp-a").innerHTML = opts; $("#cmp-b").innerHTML = opts;
+  $("#cmp-a").value = a || META.quarters[0]; $("#cmp-b").value = b || META.latest;
+}
+
+async function init() {
+  if (window.STATIC_DATA_URL) {
+    STATIC = await (await fetch(window.STATIC_DATA_URL)).json();
+    document.body.classList.add("static");
+  }
+  applyTheme(store.get("idx.theme") || "auto");
+  META = await api("/api/meta");
+  let saved = (store.get("idx.managers") || "").split(",").filter((k) => META.managers.some((m) => m.key === k));
+  if (STATIC && saved.length && saved.length !== META.managers.length && [...saved].sort().join(",") !== US_ONLY()) saved = [];
+  SEL = new Set(saved.length ? saved : META.managers.map((m) => m.key));
+  setupQuarterSelects();
+  $("#prev").onclick = () => load(META.quarters[META.quarters.indexOf(Q) - 1]);
+  $("#next").onclick = () => load(META.quarters[META.quarters.indexOf(Q) + 1]);
+  $("#date").onchange = async (e) => {
+    if (!e.target.value) return;
+    try { const r = await api(`/api/report?date=${e.target.value}${mParam()}`); await load(r.quarter); }
+    catch (err) { toast(err.message, 3500); }
+  };
+  $("#m-all").onclick = () => { SEL = new Set(META.managers.map((m) => m.key)); afterSelChange(); };
+  $("#m-sec").onclick = () => { SEL = new Set(META.managers.filter((m) => m.key !== "nbim").map((m) => m.key)); afterSelChange(); };
+  $("#cmp-a").onchange = renderCompare; $("#cmp-b").onchange = renderCompare;
+  $("#d-close").onclick = closeDrawer; $("#scrim").onclick = closeDrawer;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeDrawer();
+    if (["INPUT", "SELECT"].includes(e.target.tagName)) return;
+    if (e.key === "ArrowLeft" && !$("#prev").disabled) $("#prev").click();
+    if (e.key === "ArrowRight" && !$("#next").disabled) $("#next").click();
+  });
+  document.querySelectorAll("#theme button").forEach((b) => b.onclick = () => applyTheme(b.dataset.t));
+  document.querySelectorAll("#trend-mode button").forEach((b) => b.onclick = () => {
+    trendMode = b.dataset.v; document.querySelectorAll("#trend-mode button").forEach((x) => x.classList.toggle("on", x === b)); renderTrend(REPORT);
+  });
+  document.querySelectorAll("[data-tbl]").forEach((b) => b.onclick = () => {
+    const t = b.dataset.tbl, show = $(`#${t}-table`).classList.contains("hidden");
+    $(`#${t}-table`).classList.toggle("hidden", !show); $(`#${t}-list`).classList.toggle("hidden", show);
+    b.textContent = show ? "List" : "Table";
+  });
+  $("#refresh").onclick = startRefresh;
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (REPORT) { renderAll(); renderStudy(); } });
+  if (!STATIC && (await (await fetch("/api/refresh")).json()).running) pollRefresh();
+  if (!META.quarters.length) {
+    $("#app").insertAdjacentHTML("afterbegin", '<div class="card empty" style="margin-top:24px">No data yet. Click <b>↻ Refresh data</b> above (the first download takes ~40 minutes).</div>');
+    return;
+  }
+  if (!store.get("idx.seenGuide")) { $("#guide").open = true; store.set("idx.seenGuide", "1"); }
+  const fromUrl = new URLSearchParams(location.search).get("q");
+  await load(META.quarters.includes(fromUrl) ? fromUrl : META.latest);
+  renderStudy();
+}
+init().catch((e) => { $("#app").insertAdjacentHTML("afterbegin", `<div class="card empty" style="margin-top:24px">Error: ${esc(e.message)}</div>`); });
+</script>
+</body>
+</html>
